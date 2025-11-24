@@ -203,6 +203,20 @@ public class HotelRestServiceImpl implements HotelRestService {
             room.setNbLits(c.getNbLits());
             room.setPrixParNuit(c.getPrixParNuit());
             room.setImageUrl(c.getImageUrl()); // Inclure l'URL de l'image
+
+            // Encoder l'image en Base64 si elle existe
+            if (c.getImageUrl() != null && !c.getImageUrl().isEmpty()) {
+                try {
+                    String imageData = loadAndEncodeImage(c.getImageUrl());
+                    room.setImageData(imageData);
+                    logger.debug("[REST-SERVICE] Image encoded for room {} : {} bytes",
+                                c.getNumero(), imageData != null ? imageData.length() : 0);
+                } catch (Exception e) {
+                    logger.warn("[REST-SERVICE] Failed to encode image for room {}: {}",
+                               c.getNumero(), e.getMessage());
+                }
+            }
+
             offer.setRoom(room);
             
             // Prix total
@@ -470,6 +484,55 @@ public class HotelRestServiceImpl implements HotelRestService {
     
     private static String safeString(String s) {
         return s == null ? "" : s.trim();
+    }
+
+    /**
+     * Charge une image depuis le classpath et l'encode en Base64
+     */
+    private String loadAndEncodeImage(String imageUrl) {
+        if (imageUrl == null || imageUrl.isEmpty()) {
+            return null;
+        }
+
+        try {
+            // Construire le chemin vers le fichier dans static/
+            String resourcePath = "/static" + imageUrl;
+            logger.debug("[ENCODE-IMAGE] Loading image from: {}", resourcePath);
+
+            // Charger depuis le classpath
+            java.io.InputStream is = getClass().getResourceAsStream(resourcePath);
+            if (is == null) {
+                logger.warn("[ENCODE-IMAGE] Image not found in classpath: {}", resourcePath);
+                return null;
+            }
+
+            // Lire tous les bytes
+            byte[] imageBytes = readAllBytes(is);
+            is.close();
+
+            // Encoder en Base64
+            String base64 = java.util.Base64.getEncoder().encodeToString(imageBytes);
+            logger.debug("[ENCODE-IMAGE] Image encoded: {} bytes -> {} chars", imageBytes.length, base64.length());
+
+            return base64;
+        } catch (Exception e) {
+            logger.error("[ENCODE-IMAGE] Error encoding image {}: {}", imageUrl, e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Lit tous les bytes d'un InputStream
+     */
+    private byte[] readAllBytes(java.io.InputStream is) throws java.io.IOException {
+        java.io.ByteArrayOutputStream buffer = new java.io.ByteArrayOutputStream();
+        int nRead;
+        byte[] data = new byte[4096];
+        while ((nRead = is.read(data, 0, data.length)) != -1) {
+            buffer.write(data, 0, nRead);
+        }
+        buffer.flush();
+        return buffer.toByteArray();
     }
 }
 

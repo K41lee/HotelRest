@@ -19,6 +19,9 @@ public class RoomDTO {
     @JsonProperty("imageUrl")
     private String imageUrl;
 
+    @JsonProperty("imageData")
+    private String imageData; // Image encodée en Base64
+
     // Constructeur par défaut
     public RoomDTO() {}
 
@@ -66,6 +69,14 @@ public class RoomDTO {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getImageData() {
+        return imageData;
+    }
+
+    public void setImageData(String imageData) {
+        this.imageData = imageData;
     }
 
     @Override

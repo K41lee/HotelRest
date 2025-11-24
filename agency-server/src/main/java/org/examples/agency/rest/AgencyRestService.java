@@ -154,7 +154,8 @@ public class AgencyRestService {
                     r.put("numero", offer.getRoom().getNumero());
                     r.put("nbLits", offer.getRoom().getNbLits());
                     r.put("prixParNuit", offer.getRoom().getPrixParNuit());
-                    r.put("imageUrl", offer.getRoom().getImageUrl()); // ✅ Ajout de l'image
+                    r.put("imageUrl", offer.getRoom().getImageUrl());
+                    r.put("imageData", offer.getRoom().getImageData()); // ✅ Ajout de l'image encodée
                     m.put("room", r);
                 }
                 
