@@ -356,15 +356,53 @@ public class HotelRestServiceImpl implements HotelRestService {
     }
     
     private boolean isRoomAvailableLocal(String hotelName, int roomNumber, LocalDate from, LocalDate to) {
+        // 1. Vérifier le cache mémoire
         String key = normalize(hotelName);
         List<ReservationPeriod> list = reservationsByHotel.get(key);
-        if (list == null) return true;
-        
-        for (ReservationPeriod rp : list) {
-            if (rp.roomNumber == roomNumber && rp.overlaps(from, to)) {
-                return false;
+        if (list != null) {
+            for (ReservationPeriod rp : list) {
+                if (rp.roomNumber == roomNumber && rp.overlaps(from, to)) {
+                    logger.info("[REST-SERVICE] Room {} unavailable (cache): from={} to={}",
+                               roomNumber, from, to);
+                    return false;
+                }
             }
         }
+
+        // 2. Vérifier la base de données H2 si disponible
+        if (dbService != null) {
+            try {
+                Optional<org.examples.server.entity.HotelEntity> hotelEntity =
+                    dbService.findHotelByNom(hotelName);
+
+                if (hotelEntity.isPresent()) {
+                    List<org.examples.server.entity.ChambreEntity> chambres =
+                        dbService.findChambresByHotel(hotelEntity.get().getId());
+
+                    final int roomNum = roomNumber;
+                    org.examples.server.entity.ChambreEntity chambreEntity = chambres.stream()
+                        .filter(c -> c.getNumero() == roomNum)
+                        .findFirst()
+                        .orElse(null);
+
+                    if (chambreEntity != null) {
+                        List<org.examples.server.entity.ReservationEntity> overlapping =
+                            dbService.findReservationsByChambre(chambreEntity.getId()).stream()
+                            .filter(r -> r.getDebut().isBefore(to) && from.isBefore(r.getFin()))
+                            .collect(Collectors.toList());
+
+                        if (!overlapping.isEmpty()) {
+                            logger.info("[REST-SERVICE] Room {} unavailable (DB): {} overlapping reservations from={} to={}",
+                                       roomNumber, overlapping.size(), from, to);
+                            return false;
+                        }
+                    }
+                }
+            } catch (Exception dbEx) {
+                logger.warn("[REST-SERVICE] Failed to check DB for room availability: {}", dbEx.getMessage());
+            }
+        }
+
         return true;
     }
     
