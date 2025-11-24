@@ -22,6 +22,12 @@ public class AgencyRestService {
     @Autowired
     private HotelRestClient hotelClient;
     
+    @org.springframework.beans.factory.annotation.Value("${agency.discount.rate:0.10}")
+    private double discountRate;
+
+    @org.springframework.beans.factory.annotation.Value("${agency.name:MegaAgence}")
+    private String agencyName;
+
     /**
      * Gérer une requête JSON du client TCP
      */
@@ -90,12 +96,14 @@ public class AgencyRestService {
         }
         
         Map<String, Object> data = new LinkedHashMap<>();
-        data.put("name", "Agence Centrale");
+        data.put("name", agencyName);
+        data.put("discount", (int)(discountRate * 100) + "%");
         data.put("cities", new ArrayList<>(cities));
         data.put("agencies", new ArrayList<>(agencies));
         
-        log.info("[AGENCY-REST] Catalog: cities={}, agencies={}", cities.size(), agencies.size());
-        
+        log.info("[AGENCY-REST] Catalog: name={}, discount={}%, cities={}, agencies={}",
+                 agencyName, (int)(discountRate * 100), cities.size(), agencies.size());
+
         return data;
     }
     
@@ -163,15 +171,16 @@ public class AgencyRestService {
                 m.put("start", offer.getStart() != null ? offer.getStart().toString() : null);
                 m.put("end", offer.getEnd() != null ? offer.getEnd().toString() : null);
                 
-                // Prix avec remise de 10% (commission agence)
+                // Prix avec remise (commission agence)
                 double originalPrice = offer.getPrixTotal();
-                double discounted = Math.round(originalPrice * 0.9 * 100.0) / 100.0;
+                double discounted = Math.round(originalPrice * (1 - discountRate) * 100.0) / 100.0;
                 m.put("prixOriginal", originalPrice);
                 m.put("prixTotal", discounted);
                 
-                log.info("[AGENCY-REST] Applied 10% discount for partner {} offerId={}: {} -> {}",
-                        hotelCode, offer.getOfferId(), originalPrice, discounted);
-                
+                int discountPercent = (int) (discountRate * 100);
+                log.info("[AGENCY-REST] Applied {}% discount for partner {} offerId={}: {} -> {}",
+                        discountPercent, hotelCode, offer.getOfferId(), originalPrice, discounted);
+
                 m.put("agenceApplied", offer.getAgenceApplied());
                 m.put("offerId", offer.getOfferId());
                 m.put("hotelCode", hotelCode);
