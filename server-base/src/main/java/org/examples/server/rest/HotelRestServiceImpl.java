@@ -202,6 +202,7 @@ public class HotelRestServiceImpl implements HotelRestService {
             room.setNumero(c.getNumero());
             room.setNbLits(c.getNbLits());
             room.setPrixParNuit(c.getPrixParNuit());
+            room.setImageUrl(c.getImageUrl()); // Inclure l'URL de l'image
             offer.setRoom(room);
             
             // Prix total

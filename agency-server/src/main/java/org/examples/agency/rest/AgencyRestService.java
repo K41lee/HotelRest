@@ -153,6 +153,8 @@ public class AgencyRestService {
                     Map<String, Object> r = new LinkedHashMap<>();
                     r.put("numero", offer.getRoom().getNumero());
                     r.put("nbLits", offer.getRoom().getNbLits());
+                    r.put("prixParNuit", offer.getRoom().getPrixParNuit());
+                    r.put("imageUrl", offer.getRoom().getImageUrl()); // ✅ Ajout de l'image
                     m.put("room", r);
                 }
                 
@@ -172,11 +174,6 @@ public class AgencyRestService {
                 m.put("agenceApplied", offer.getAgenceApplied());
                 m.put("offerId", offer.getOfferId());
                 m.put("hotelCode", hotelCode);
-                
-                // URL d'image
-                if (offer.getRoom() != null && offer.getRoom().getImageUrl() != null) {
-                    m.put("imageUrl", offer.getRoom().getImageUrl());
-                }
                 
                 offers.add(m);
             }
