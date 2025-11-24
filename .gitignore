@@ -1,18 +1,26 @@
-# Bases de données H2
-server-opera/data/*.db
-server-rivage/data/*.db
+# ==========================================
+# Bases de données H2 (fichiers générés)
+# ==========================================
 *.mv.db
 *.trace.db
 *.lock.db
+server-opera/data/
+server-rivage/data/
 
-# Sauvegardes
+# ==========================================
+# Sauvegardes (fichiers temporaires)
+# ==========================================
 backups/
 
-# Logs
+# ==========================================
+# Logs (fichiers générés à l'exécution)
+# ==========================================
 logs/*.log
 *.log
 
-# Maven
+# ==========================================
+# Maven (fichiers compilés)
+# ==========================================
 target/
 pom.xml.tag
 pom.xml.releaseBackup
@@ -22,9 +30,13 @@ release.properties
 dependency-reduced-pom.xml
 buildNumber.properties
 .mvn/timing.properties
-.mvn/wrapper/maven-wrapper.jar
 
-# IDE
+# Garder le wrapper Maven
+!.mvn/wrapper/maven-wrapper.jar
+
+# ==========================================
+# IDE (fichiers de configuration IDE)
+# ==========================================
 .idea/
 *.iml
 .vscode/
@@ -35,20 +47,39 @@ buildNumber.properties
 *.swo
 *~
 
-# OS
+# ==========================================
+# OS (fichiers système)
+# ==========================================
 .DS_Store
 Thumbs.db
 
-# Compiled
+# ==========================================
+# Compiled (fichiers compilés Java)
+# ==========================================
 *.class
 *.jar
 !.mvn/wrapper/maven-wrapper.jar
 
-# Temporary files
+# ==========================================
+# Temporary files (fichiers temporaires)
+# ==========================================
 /tmp/
 *.tmp
 nohup.out
 
-# Generated HTML
+# ==========================================
+# Generated HTML (HTML temporaires)
+# ==========================================
 /tmp/*.html
+
+# ==========================================
+# IMPORTANT : Fichiers à INCLURE dans Git
+# ==========================================
+# ✅ Tous les fichiers sources (.java)
+# ✅ Tous les pom.xml
+# ✅ Fichiers de configuration (application.properties)
+# ✅ Scripts shell (*.sh)
+# ✅ README.md et documentation
+# ✅ Images statiques (SVG dans resources/static/)
+# ✅ Fichiers de ressources (resources/)
 
