@@ -7,9 +7,11 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
+import javax.swing.table.TableRowSorter;
 import java.awt.*;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -21,6 +23,7 @@ public class ResultsPanel extends JPanel {
     private HotelClientGUI mainFrame;
     private JTable resultsTable;
     private DefaultTableModel tableModel;
+    private TableRowSorter<DefaultTableModel> sorter;
     private JButton reserveButton;
     private JButton backButton;
     private JLabel infoLabel;
@@ -121,19 +124,24 @@ public class ResultsPanel extends JPanel {
                 int col = resultsTable.columnAtPoint(e.getPoint());
 
                 // Colonne 8 = colonne Image (après ajout colonne Agence)
-                if (row >= 0 && col == 8 && row < imageUrls.size()) {
-                    String imageUrl = imageUrls.get(row);
-                    System.out.println("DEBUG - Clic sur image row=" + row + ", imageUrl='" + imageUrl + "'");
-                    System.out.println("DEBUG - imageUrl != null: " + (imageUrl != null));
-                    System.out.println("DEBUG - !imageUrl.isEmpty(): " + (imageUrl != null && !imageUrl.isEmpty()));
-                    if (imageUrl != null && !imageUrl.isEmpty()) {
-                        showImageDialog(imageUrl, row);
-                    } else {
-                        System.out.println("DEBUG - Affichage message 'Image non disponible'");
-                        JOptionPane.showMessageDialog(ResultsPanel.this,
-                            "Aucune image disponible pour cette chambre.\nDEBUG: imageUrl='" + imageUrl + "'",
-                            "Image non disponible",
-                            JOptionPane.INFORMATION_MESSAGE);
+                if (row >= 0 && col == 8) {
+                    // Convertir l'index de vue en index de modèle
+                    int modelRow = resultsTable.convertRowIndexToModel(row);
+
+                    if (modelRow < imageUrls.size()) {
+                        String imageUrl = imageUrls.get(modelRow);
+                        System.out.println("DEBUG - Clic sur image row=" + row + ", modelRow=" + modelRow + ", imageUrl='" + imageUrl + "'");
+                        System.out.println("DEBUG - imageUrl != null: " + (imageUrl != null));
+                        System.out.println("DEBUG - !imageUrl.isEmpty(): " + (imageUrl != null && !imageUrl.isEmpty()));
+                        if (imageUrl != null && !imageUrl.isEmpty()) {
+                            showImageDialog(imageUrl, modelRow);
+                        } else {
+                            System.out.println("DEBUG - Affichage message 'Image non disponible'");
+                            JOptionPane.showMessageDialog(ResultsPanel.this,
+                                "Aucune image disponible pour cette chambre.\nDEBUG: imageUrl='" + imageUrl + "'",
+                                "Image non disponible",
+                                JOptionPane.INFORMATION_MESSAGE);
+                        }
                     }
                 }
             }
@@ -146,18 +154,98 @@ public class ResultsPanel extends JPanel {
                 int row = resultsTable.rowAtPoint(e.getPoint());
                 int col = resultsTable.columnAtPoint(e.getPoint());
 
-                if (col == 8 && row >= 0 && row < imageUrls.size() &&
-                    imageUrls.get(row) != null && !imageUrls.get(row).isEmpty()) {
-                    resultsTable.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                if (col == 8 && row >= 0) {
+                    // Convertir l'index de vue en index de modèle
+                    int modelRow = resultsTable.convertRowIndexToModel(row);
+
+                    if (modelRow < imageUrls.size() &&
+                        imageUrls.get(modelRow) != null && !imageUrls.get(modelRow).isEmpty()) {
+                        resultsTable.setCursor(new Cursor(Cursor.HAND_CURSOR));
+                    } else {
+                        resultsTable.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+                    }
                 } else {
                     resultsTable.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
                 }
             }
         });
 
+        // Initialiser le sorter
+        sorter = new TableRowSorter<>(tableModel);
+        resultsTable.setRowSorter(sorter);
+
+        // Configurer les comparateurs pour les colonnes
+        // Colonne 0: Hôtel (String)
+        sorter.setComparator(0, String.CASE_INSENSITIVE_ORDER);
+        // Colonne 3: Chambre (extraire le numéro)
+        sorter.setComparator(3, new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                try {
+                    int num1 = Integer.parseInt(s1.replace("N°", "").trim());
+                    int num2 = Integer.parseInt(s2.replace("N°", "").trim());
+                    return Integer.compare(num1, num2);
+                } catch (NumberFormatException e) {
+                    return s1.compareTo(s2);
+                }
+            }
+        });
+        // Colonne 5: Prix (extraire le nombre)
+        sorter.setComparator(5, new Comparator<String>() {
+            @Override
+            public int compare(String s1, String s2) {
+                try {
+                    int price1 = Integer.parseInt(s1.replace("€", "").trim());
+                    int price2 = Integer.parseInt(s2.replace("€", "").trim());
+                    return Integer.compare(price1, price2);
+                } catch (NumberFormatException e) {
+                    return s1.compareTo(s2);
+                }
+            }
+        });
+        // Colonne 6: Agence (String)
+        sorter.setComparator(6, String.CASE_INSENSITIVE_ORDER);
+
+        // Panneau contenant le panneau de tri et la table
+        JPanel centerPanel = new JPanel(new BorderLayout(5, 5));
+        centerPanel.setOpaque(false);
+
+        // Panneau de boutons de tri
+        JPanel sortPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
+        sortPanel.setOpaque(false);
+        sortPanel.setBorder(BorderFactory.createTitledBorder(
+            BorderFactory.createLineBorder(new Color(180, 180, 180), 1),
+            "⚙️ Trier par :"
+        ));
+
+        JButton sortHotelButton = createSortButton("🏨 Hôtel", 0);
+        JButton sortRoomButton = createSortButton("🚪 Chambre", 3);
+        JButton sortAgencyButton = createSortButton("🏢 Agence", 6);
+        JButton sortPriceButton = createSortButton("💰 Prix", 5);
+        JButton resetSortButton = new JButton("🔄 Réinitialiser");
+        resetSortButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        resetSortButton.setBackground(new Color(255, 200, 200));
+        resetSortButton.setForeground(Color.BLACK);
+        resetSortButton.setFocusPainted(false);
+        resetSortButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        resetSortButton.addActionListener(e -> {
+            sorter.setSortKeys(null);
+            sorter.sort();
+        });
+
+        sortPanel.add(sortHotelButton);
+        sortPanel.add(sortRoomButton);
+        sortPanel.add(sortAgencyButton);
+        sortPanel.add(sortPriceButton);
+        sortPanel.add(resetSortButton);
+
+        centerPanel.add(sortPanel, BorderLayout.NORTH);
+
         JScrollPane scrollPane = new JScrollPane(resultsTable);
         scrollPane.setBorder(BorderFactory.createLineBorder(new Color(200, 200, 200), 1));
-        add(scrollPane, BorderLayout.CENTER);
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        add(centerPanel, BorderLayout.CENTER);
 
         // Panneau de boutons
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 15));
@@ -278,10 +366,13 @@ public class ResultsPanel extends JPanel {
         }
 
         try {
+            // Convertir l'index de vue en index de modèle (important si la table est triée)
+            int modelRow = resultsTable.convertRowIndexToModel(selectedRow);
+
             List<String> offers = MiniJson.getStringArray(currentOffersJson, "offers");
-            if (offers != null && selectedRow < offers.size()) {
-                String selectedOffer = offers.get(selectedRow);
-                int agencyPort = agencyPorts.get(selectedRow);
+            if (offers != null && modelRow < offers.size()) {
+                String selectedOffer = offers.get(modelRow);
+                int agencyPort = agencyPorts.get(modelRow);
 
                 // Passer au panneau de réservation
                 ReservationPanel reservationPanel = (ReservationPanel) ((JPanel) mainFrame.getContentPane().getComponent(0))
@@ -627,5 +718,51 @@ public class ResultsPanel extends JPanel {
         } catch (Exception e) {
             return new Color(230, 230, 250);
         }
+    }
+
+    /**
+     * Crée un bouton de tri pour une colonne spécifique
+     */
+    private JButton createSortButton(String label, int columnIndex) {
+        JButton button = new JButton(label);
+        button.setFont(new Font("Arial", Font.PLAIN, 12));
+        button.setBackground(new Color(200, 220, 255));
+        button.setForeground(Color.BLACK);
+        button.setFocusPainted(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        button.addActionListener(e -> {
+            // Alterner entre tri ascendant et descendant
+            java.util.List<? extends javax.swing.RowSorter.SortKey> sortKeys = sorter.getSortKeys();
+            javax.swing.SortOrder newOrder = javax.swing.SortOrder.ASCENDING;
+
+            if (!sortKeys.isEmpty() && sortKeys.get(0).getColumn() == columnIndex) {
+                // Si déjà trié sur cette colonne, inverser l'ordre
+                newOrder = sortKeys.get(0).getSortOrder() == javax.swing.SortOrder.ASCENDING
+                    ? javax.swing.SortOrder.DESCENDING
+                    : javax.swing.SortOrder.ASCENDING;
+            }
+
+            java.util.List<javax.swing.RowSorter.SortKey> newSortKeys = new ArrayList<>();
+            newSortKeys.add(new javax.swing.RowSorter.SortKey(columnIndex, newOrder));
+            sorter.setSortKeys(newSortKeys);
+            sorter.sort();
+
+            // Mettre à jour le texte du bouton pour indiquer l'ordre de tri
+            String arrow = newOrder == javax.swing.SortOrder.ASCENDING ? "↑" : "↓";
+            button.setText(label + " " + arrow);
+
+            // Réinitialiser les autres boutons
+            for (Component c : button.getParent().getComponents()) {
+                if (c instanceof JButton && c != button && !((JButton)c).getText().contains("Réinitialiser")) {
+                    String btnText = ((JButton)c).getText();
+                    if (btnText.contains("↑") || btnText.contains("↓")) {
+                        ((JButton)c).setText(btnText.replaceAll(" [↑↓]", ""));
+                    }
+                }
+            }
+        });
+
+        return button;
     }
 }
