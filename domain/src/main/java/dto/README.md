@@ -134,4 +134,3 @@ Erreur HTTP standardisée
 - ✅ Java 8+ (LocalDate, LocalDateTime)
 - ✅ Jackson 2.15.2
 - ✅ Support JSR-310 (java.time)
-

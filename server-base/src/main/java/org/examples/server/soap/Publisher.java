@@ -8,12 +8,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
-import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
 import java.util.*;
 
-@Component
 public class Publisher implements CommandLineRunner, DisposableBean {
 
     private final ApplicationContext ctx;

@@ -25,7 +25,7 @@ public class Offer {
     public Integer roomNumber;
     public Integer nbLits;
 
-    // Nouveau: URL publique de l'image de la chambre
+    // URL publique de l'image de la chambre
     @XmlElement
     public String imageUrl;
 

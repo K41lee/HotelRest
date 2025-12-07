@@ -10,10 +10,8 @@ import Impl.ReservationResult;
 import Impl.Client;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 @WebService(endpointInterface = "org.examples.server.soap.HotelService", serviceName = "HotelServiceDebug")
-@Component
 @XmlSeeAlso({Offer.class, Address.class, Room.class, OfferList.class, Catalog.class, ReservationConfirmation.class, ReservationRequest.class, SearchCriteria.class, SearchOffersResponse.class})
 public class HotelServiceDebugImpl implements HotelService {
     private static final Logger log = LoggerFactory.getLogger(HotelServiceDebugImpl.class);

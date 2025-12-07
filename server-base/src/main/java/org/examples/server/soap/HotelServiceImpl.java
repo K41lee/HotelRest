@@ -18,7 +18,6 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Component;
 import javax.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,7 @@ import java.util.Map;
 import java.util.ArrayList;
 
 @WebService(endpointInterface = "org.examples.server.soap.HotelService", serviceName = "HotelService")
-@Component
+// @Component // annotation retirée : ne pas enregistrer en tant que bean Spring
 @XmlSeeAlso({Offer.class, Address.class, Room.class, OfferList.class, Catalog.class, ReservationConfirmation.class, ReservationRequest.class, SearchCriteria.class, SearchOffersResponse.class})
 public class HotelServiceImpl implements HotelService {
 
